@@ -1,0 +1,96 @@
+name: MoneyGeek Playwright Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run tests daily at 9 AM UTC to monitor site functionality
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  # Environment variables for the tests
+  CI: true
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: false
+
+jobs:
+  test:
+    name: Run Playwright Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        # You can add multiple test files here if needed
+        test-file: ['home-insurance-flow-2.spec.ts']
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps chromium
+      
+    - name: Run Playwright tests
+      run: npx playwright test ${{ matrix.test-file }} --reporter=html,json,junit
+      env:
+        # Ensure tests run in headless mode in CI
+        PWDEBUG: 0
+        
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report-${{ matrix.test-file }}
+        path: playwright-report/
+        retention-days: 30
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.test-file }}
+        path: |
+          test-results/
+          test-results.json
+          test-results.xml
+        retention-days: 7
+        
+    - name: Upload Screenshots & Videos on Failure
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-artifacts-${{ matrix.test-file }}
+        path: |
+          test-results/**/*.png
+          test-results/**/*.webm
+        retention-days: 7
+
+  # Optional: Notify on test results
+  notify:
+    name: Notify Test Results
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Test Results Summary
+      run: |
+        if [ "${{ needs.test.result }}" == "success" ]; then
+          echo "✅ All Playwright tests passed!"
+        else
+          echo "❌ Some Playwright tests failed!"
+          exit 1
+        fi

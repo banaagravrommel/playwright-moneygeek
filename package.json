@@ -1,11 +1,22 @@
 {
   "name": "playwright-moneygeek",
   "version": "1.0.0",
-  "description": "",
+  "description": "Automated testing for MoneyGeek insurance flows using Playwright",
   "main": "index.js",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:home-insurance": "playwright test home-insurance-flow-2.spec.ts",
+    "test:ci": "playwright test --reporter=html,json,junit",
+    "install:browsers": "playwright install --with-deps chromium",
+    "report": "playwright show-report",
+    "report:open": "playwright show-report --port=9323",
+    "clean": "rm -rf test-results playwright-report"
+  },
+  "keywords": ["playwright", "automation", "testing", "insurance", "moneygeek"],
+  "author": "Your Name",
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.54.1",

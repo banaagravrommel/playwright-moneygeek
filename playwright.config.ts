@@ -1,14 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -30,13 +22,18 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   
   /* Single worker to avoid conflicts with your insurance flow test */
-  workers: 1,
+  workers: process.env.CI ? 1 : undefined,
   
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
+  reporter: process.env.CI ? [
     ['html'],
     ['json', { outputFile: 'test-results.json' }],
-    ['junit', { outputFile: 'test-results.xml' }] // For CI integration
+    ['junit', { outputFile: 'test-results.xml' }],
+    ['github'] // GitHub Actions reporter
+  ] : [
+    ['html'],
+    ['json', { outputFile: 'test-results.json' }],
+    ['junit', { outputFile: 'test-results.xml' }]
   ],
   
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -48,20 +45,23 @@ export default defineConfig({
     trace: 'retain-on-failure',
     
     /* Screenshot configuration */
-    screenshot: 'only-on-failure', // Takes screenshots on test failures
+    screenshot: 'only-on-failure',
     
-    /* Video recording */
-    video: 'retain-on-failure', // Records video on failure
+    /* Video recording - only on failure for CI to save space */
+    video: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     
     /* Action and navigation timeouts */
-    actionTimeout: 15000, // 15 seconds for individual actions
-    navigationTimeout: 30000, // 30 seconds for page navigation
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
     
     /* Ignore HTTPS errors for testing */
     ignoreHTTPSErrors: true,
     
     /* Default viewport size */
     viewport: { width: 1280, height: 720 },
+    
+    /* Headless mode for CI */
+    headless: process.env.CI ? true : false,
   },
 
   /* Configure projects for major browsers */
@@ -70,59 +70,19 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Your specific settings for the insurance flow
         locale: 'en-US',
         permissions: ['geolocation'],
         geolocation: { latitude: 37.7749, longitude: -122.4194 }, // San Francisco, CA
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
       },
     },
-
-    // Commented out other browsers since your test is Chromium-specific
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
 
   /* Expect configuration */
   expect: {
-    /* Maximum time expect() should wait for the condition to be met. */
-    timeout: 10000, // 10 seconds for assertions
+    timeout: 10000,
   },
 
   /* Output directory for test artifacts */
   outputDir: 'test-results/',
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });
