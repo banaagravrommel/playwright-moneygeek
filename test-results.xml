@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="20.583483">
+<testsuite name="home-insurance-flow-2.spec.ts" timestamp="2025-07-31T15:11:32.347Z" hostname="chromium" tests="1" failures="0" skipped="0" time="18.529" errors="0">
+<testcase name="Home Insurance Quote Flow with Validations › should complete home insurance quote form with element validations at each step" classname="home-insurance-flow-2.spec.ts" time="18.529">
+</testcase>
+</testsuite>
+</testsuites>
